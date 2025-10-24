@@ -1,0 +1,10 @@
+{
+    "ssh": {
+        "port": 22,
+        "banner": "SSH-2.0-OpenSSH_7.6p1",
+        "users": {
+            "root": "toor",
+            "admin": "admin"
+        }
+    }
+}

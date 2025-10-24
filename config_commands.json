@@ -1,0 +1,1337 @@
+{
+    "_comment": "SSHPot Command Configuration - Commands are ordered by customization priority",
+    "_comment_structure": "Section 1: Highly Customizable (System Identity) | Section 2: Moderately Customizable (System State) | Section 3: Fixed Responses (Errors & Standard Commands)",
+
+    "_section_1": "============================================================",
+    "_section_1_title": "HIGHLY CUSTOMIZABLE - System Identity & Configuration",
+    "_section_1_purpose": "Commands users will likely customize to match their honeypot environment",
+    "_section_1_end": "============================================================",
+
+    "hostname": {
+        "output": "debian",
+        "latency_ms": [30, 70],
+        "customizable": true,
+        "description": "System hostname - customize to match target environment"
+    },
+
+    "whoami": {
+        "output": "root",
+        "latency_ms": [50, 150],
+        "customizable": true,
+        "description": "Current user - typically 'root' but may vary by scenario"
+    },
+
+    "uname": {
+        "output": "dynamic",
+        "latency_ms": [40, 100],
+        "customizable": true,
+        "file_operations": {
+            "type": "system_info",
+            "requires_args": false,
+            "flags": {
+                "-a": {"all": true},
+                "-r": {"kernel_release": true},
+                "-s": {"kernel_name": true},
+                "-m": {"machine": true},
+                "-n": {"nodename": true}
+            },
+            "output_type": "system_info",
+            "default_values": {
+                "kernel_name": "Linux",
+                "nodename": "debian",
+                "kernel_release": "5.4.0-42-generic",
+                "kernel_version": "#46-Ubuntu SMP Fri Jul 10 00:24:02 UTC 2020",
+                "machine": "x86_64",
+                "processor": "x86_64",
+                "platform": "x86_64",
+                "os": "GNU/Linux"
+            }
+        },
+        "description": "System information - customize kernel version, architecture to match target"
+    },
+
+    "lscpu": {
+        "output": "Architecture: x86_64\nCPU(s): 4\nModel name: Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz\nThread(s) per core: 2\nCore(s) per socket: 2",
+        "latency_ms": [60, 150],
+        "customizable": true,
+        "description": "CPU information - customize to match realistic hardware profile"
+    },
+
+    "free": {
+        "output": "               total        used        free      shared  buff/cache   available\nMem:        8052532     {{random:3000000:3500000}}     {{random:2000000:2500000}}      {{random:100000:150000}}     {{random:2400000:2600000}}     {{random:5000000:5500000}}\nSwap:       2097148           0     2097148",
+        "latency_ms": [50, 120],
+        "customizable": true,
+        "dynamic_values": true,
+        "description": "Memory usage - uses randomized memory values for realistic variation"
+    },
+
+    "df": {
+        "output": "Filesystem     1K-blocks    Used Available Use% Mounted on\n/dev/sda1       20971520 8388608  11534336  45% /\ntmpfs            4026266       0   4026266   0% /dev/shm",
+        "latency_ms": [60, 150],
+        "customizable": true,
+        "description": "Disk space - customize partition sizes and usage percentages"
+    },
+
+    "uptime": {
+        "output": "{{datetime:%H:%M:%S}} up {{uptime_days}}, 1 user, load average: {{random:0.00:0.15:2}}, {{random:0.01:0.20:2}}, {{random:0.05:0.30:2}}",
+        "latency_ms": [40, 100],
+        "customizable": true,
+        "dynamic_values": true,
+        "description": "System uptime - uses dynamic uptime counter and randomized load averages"
+    },
+
+    "ifconfig": {
+        "output": "dynamic",
+        "latency_ms": [60, 150],
+        "customizable": true,
+        "file_operations": {
+            "type": "system_info",
+            "requires_args": false,
+            "arg_mapping": {"interface": 0},
+            "output_type": "network_interfaces",
+            "default_config": {
+                "eth0": {
+                    "inet": "192.168.1.100",
+                    "netmask": "255.255.255.0",
+                    "broadcast": "192.168.1.255",
+                    "hwaddr": "00:0c:29:3f:4a:5b",
+                    "mtu": 1500
+                },
+                "lo": {
+                    "inet": "127.0.0.1",
+                    "netmask": "255.0.0.0"
+                }
+            }
+        },
+        "description": "Network interfaces - customize IP addresses, MAC addresses, interface names"
+    },
+
+    "ip": {
+        "output": "dynamic",
+        "latency_ms": [60, 150],
+        "customizable": true,
+        "file_operations": {
+            "type": "system_info",
+            "requires_args": false,
+            "arg_mapping": {"object": 0, "action": 1},
+            "validates": [],
+            "output_type": "ip_command",
+            "default_config": {
+                "addresses": ["192.168.1.100/24"],
+                "gateway": "192.168.1.1",
+                "interfaces": ["eth0", "lo"]
+            }
+        },
+        "description": "Network configuration - customize network topology"
+    },
+
+    "route": {
+        "output": "Kernel IP routing table\nDestination     Gateway         Genmask         Flags Metric Ref    Use Iface\ndefault         192.168.1.1     0.0.0.0         UG    0      0        0 eth0\n192.168.1.0     0.0.0.0         255.255.255.0   U     0      0        0 eth0",
+        "latency_ms": [60, 150],
+        "customizable": true,
+        "description": "Routing table - customize network routes and gateways"
+    },
+
+    "arp": {
+        "output": "Address                  HWtype  HWaddress           Flags Mask            Iface\n192.168.1.1              ether   00:11:22:33:44:55   C                     eth0\n192.168.1.254            ether   aa:bb:cc:dd:ee:ff   C                     eth0",
+        "latency_ms": [60, 150],
+        "customizable": true,
+        "description": "ARP table - customize neighbor MAC addresses"
+    },
+
+    "netstat": {
+        "output": "dynamic",
+        "latency_ms": [80, 200],
+        "customizable": true,
+        "file_operations": {
+            "type": "system_info",
+            "requires_args": false,
+            "flags": {
+                "-a": {"all": true},
+                "-n": {"numeric": true},
+                "-t": {"tcp": true},
+                "-u": {"udp": true},
+                "-l": {"listening": true},
+                "-p": {"programs": true}
+            },
+            "output_type": "network_connections",
+            "default_services": ["sshd:22", "apache2:80", "mysqld:3306"]
+        },
+        "description": "Network connections - customize listening services and ports"
+    },
+
+    "ss": {
+        "output": "Netid  State      Recv-Q Send-Q Local Address:Port               Peer Address:Port\ntcp    LISTEN     0      128    0.0.0.0:22                    0.0.0.0:*\ntcp    LISTEN     0      128    0.0.0.0:80                    0.0.0.0:*",
+        "latency_ms": [80, 200],
+        "customizable": true,
+        "description": "Socket statistics - customize listening sockets"
+    },
+
+    "lsof": {
+        "output": "COMMAND    PID USER   FD   TYPE DEVICE SIZE/OFF NODE NAME\nsshd      {{counter:sshd_pid:1234:0}} root    3u  IPv4  {{counter:sshd_node:12345:0}}      0t0  TCP *:22 (LISTEN)\napache2   {{counter:apache_pid:5678:0}} www     4u  IPv4  {{counter:apache_node:23456:0}}      0t0  TCP *:80 (LISTEN)",
+        "latency_ms": [100, 250],
+        "customizable": true,
+        "dynamic_values": true,
+        "description": "Open files - uses persistent PIDs that stay constant per session"
+    },
+
+    "ps": {
+        "output": "dynamic",
+        "latency_ms": [50, 150],
+        "customizable": true,
+        "file_operations": {
+            "type": "system_info",
+            "requires_args": false,
+            "flags": {
+                "aux": {"all_users": true, "detailed": true},
+                "-ef": {"full_format": true},
+                "-e": {"all_processes": true},
+                "-f": {"full_format_only": true}
+            },
+            "output_type": "process_list",
+            "default_processes": [
+                "systemd", "sshd", "apache2", "mysqld", "cron", "rsyslogd"
+            ]
+        },
+        "description": "Process list - customize running processes to match environment"
+    },
+
+    "top": {
+        "output": "top - {{datetime:%H:%M:%S}} up {{uptime_days}},  1 user,  load average: {{random:0.00:0.15:2}}, {{random:0.01:0.20:2}}, {{random:0.05:0.30:2}}\nTasks: {{random:120:130}} total,   {{random:1:3}} running, {{calc:{{random:120:130}}-{{random:1:3}}}} sleeping,   0 stopped,   0 zombie\n%Cpu(s):  {{random:0.0:5.0:1}} us,  {{random:0.5:2.5:1}} sy,  0.0 ni, {{random:90.0:99.5:1}} id,  {{random:0.0:1.0:1}} wa,  0.0 hi,  0.0 si,  0.0 st\nMiB Mem :   7864.0 total,   {{random:1500:2500:1}} free,   {{random:3000:4000:1}} used,   {{random:2200:2600:1}} buff/cache",
+        "latency_ms": [100, 250],
+        "customizable": true,
+        "dynamic_values": true,
+        "description": "Process monitor - uses dynamic uptime, randomized CPU/memory metrics"
+    },
+
+    "w": {
+        "output": "dynamic",
+        "latency_ms": [50, 120],
+        "customizable": true,
+        "file_operations": {
+            "type": "system_info",
+            "requires_args": false,
+            "output_type": "logged_users_extended",
+            "default_users": [
+                {"user": "root", "tty": "pts/0", "from": "192.168.1.100", "login": "12:00"}
+            ]
+        },
+        "description": "Logged users with activity - customize active sessions"
+    },
+
+    "who": {
+        "output": "dynamic",
+        "latency_ms": [50, 120],
+        "customizable": true,
+        "file_operations": {
+            "type": "system_info",
+            "requires_args": false,
+            "output_type": "logged_users"
+        },
+        "description": "Logged users - customize who appears to be logged in"
+    },
+
+    "last": {
+        "output": "root     pts/0        {{random_choice:192.168.1.100|192.168.1.101|192.168.1.102}}    {{datetime:%a %b %d %H:%M}}   still logged in\nroot     pts/0        192.168.1.50     {{datetime:%a %b %d 08:30}} - 17:45  (09:15)",
+        "latency_ms": [60, 150],
+        "customizable": true,
+        "dynamic_values": true,
+        "description": "Login history - uses current timestamp and random IP choices"
+    },
+
+    "lastlog": {
+        "output": "Username         Port     From             Latest\nroot             pts/0    192.168.1.100    Mon Jan 15 12:00:23 +0000 2024\nadmin            pts/1    192.168.1.50     Sun Jan 14 08:30:12 +0000 2024",
+        "latency_ms": [60, 150],
+        "customizable": true,
+        "description": "Last login times - customize user login history"
+    },
+
+    "id": {
+        "output": "dynamic",
+        "latency_ms": [40, 90],
+        "customizable": true,
+        "file_operations": {
+            "type": "system_info",
+            "requires_args": false,
+            "arg_mapping": {"user": 0},
+            "output_type": "user_identity",
+            "default_identity": {
+                "uid": 0,
+                "gid": 0,
+                "user": "root",
+                "groups": ["root", "sudo"]
+            }
+        },
+        "description": "User identity - customize UID/GID and group memberships"
+    },
+
+    "env": {
+        "output": "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\nHOME=/root\nLOGNAME=root\nUSER=root\nSHELL=/bin/bash\nLANG=en_US.UTF-8",
+        "latency_ms": [40, 100],
+        "customizable": true,
+        "description": "Environment variables - customize PATH, locale, and other env vars"
+    },
+
+    "printenv": {
+        "output": "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\nHOME=/root\nUSER=root\nSHELL=/bin/bash",
+        "latency_ms": [40, 100],
+        "customizable": true,
+        "description": "Environment variables (alternate) - customize environment"
+    },
+
+    "mount": {
+        "output": "/dev/sda1 on / type ext4 (rw,relatime)\ntmpfs on /dev/shm type tmpfs (rw,nosuid,nodev)\ntmpfs on /run type tmpfs (rw,nosuid,nodev,noexec)",
+        "latency_ms": [60, 150],
+        "customizable": true,
+        "description": "Mounted filesystems - customize mount points and filesystem types"
+    },
+
+    "lsblk": {
+        "output": "NAME   MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT\nsda      8:0    0   20G  0 disk\n└─sda1   8:1    0   20G  0 part /\nsr0     11:0    1 1024M  0 rom",
+        "latency_ms": [60, 150],
+        "customizable": true,
+        "description": "Block devices - customize disk layout and sizes"
+    },
+
+    "blkid": {
+        "output": "/dev/sda1: UUID=\"abc12345-def6-7890-ghij-klmnopqrstuv\" TYPE=\"ext4\" PARTUUID=\"12345678-01\"",
+        "latency_ms": [60, 150],
+        "customizable": true,
+        "description": "Block device UUIDs - customize filesystem UUIDs"
+    },
+
+    "iptables": {
+        "output": "Chain INPUT (policy ACCEPT)\ntarget     prot opt source               destination\n\nChain FORWARD (policy ACCEPT)\ntarget     prot opt source               destination\n\nChain OUTPUT (policy ACCEPT)\ntarget     prot opt source               destination",
+        "latency_ms": [100, 250],
+        "customizable": true,
+        "description": "Firewall rules - customize iptables configuration"
+    },
+
+    "ufw": {
+        "output": "Status: active\n\nTo                         Action      From\n--                         ------      ----\n22/tcp                     ALLOW       Anywhere\n80/tcp                     ALLOW       Anywhere",
+        "latency_ms": [80, 180],
+        "customizable": true,
+        "description": "UFW firewall status - customize firewall rules"
+    },
+
+    "dmesg": {
+        "output": "[    0.000000] Linux version 5.4.0-42-generic (buildd@lcy01-amd64-030)\n[    0.000000] Command line: BOOT_IMAGE=/boot/vmlinuz-5.4.0-42-generic root=UUID=abc-123\n[    0.001000] Kernel command line: BOOT_IMAGE=/boot/vmlinuz-5.4.0-42-generic",
+        "latency_ms": [100, 250],
+        "customizable": true,
+        "description": "Kernel ring buffer - customize boot messages"
+    },
+
+    "journalctl": {
+        "output": "-- Logs begin at Mon 2024-01-15 00:00:01 UTC, end at Mon 2024-01-15 12:34:56 UTC. --\nJan 15 12:00:00 debian systemd[1]: Started Session 1 of user root.\nJan 15 12:00:01 debian sshd[1234]: Accepted password for root from 192.168.1.100",
+        "latency_ms": [100, 300],
+        "customizable": true,
+        "description": "System journal - customize system log entries"
+    },
+
+    "python": {
+        "output": "Python 3.8.10 (default, Nov 14 2022, 12:59:47)\n[GCC 9.4.0] on linux\nType \"help\", \"copyright\", \"credits\" or \"license\" for more information.\n>>>",
+        "latency_ms": [100, 250],
+        "customizable": true,
+        "description": "Python version - customize installed Python version"
+    },
+
+    "python3": {
+        "output": "Python 3.8.10 (default, Nov 14 2022, 12:59:47)\n[GCC 9.4.0] on linux\nType \"help\", \"copyright\", \"credits\" or \"license\" for more information.\n>>>",
+        "latency_ms": [100, 250],
+        "customizable": true,
+        "description": "Python3 version - customize installed Python version"
+    },
+
+    "_section_2": "============================================================",
+    "_section_2_title": "MODERATELY CUSTOMIZABLE - Dynamic File Operations",
+    "_section_2_purpose": "Commands that interact with the virtual filesystem",
+    "_section_2_end": "============================================================",
+
+    "pwd": {
+        "output": "dynamic",
+        "latency_ms": [30, 80],
+        "file_operations": {
+            "type": "read",
+            "requires_args": false,
+            "output_type": "current_directory"
+        }
+    },
+
+    "cd": {
+        "output": "",
+        "latency_ms": [20, 60],
+        "file_operations": {
+            "type": "navigate",
+            "requires_args": false,
+            "arg_mapping": {"target": 0},
+            "validates": ["is_dir_if_exists"]
+        }
+    },
+
+    "ls": {
+        "output": "dynamic",
+        "latency_ms": [40, 120],
+        "file_operations": {
+            "type": "read",
+            "requires_args": false,
+            "arg_mapping": {"target": 0},
+            "validates": [],
+            "flags": {
+                "-l": {"long_format": true},
+                "-a": {"show_hidden": true},
+                "-la": {"long_format": true, "show_hidden": true},
+                "-al": {"long_format": true, "show_hidden": true},
+                "-h": {"human_readable": true},
+                "-R": {"recursive": true}
+            },
+            "output_type": "directory_listing"
+        }
+    },
+
+    "dir": {
+        "output": "dynamic",
+        "latency_ms": [40, 120],
+        "file_operations": {
+            "type": "read",
+            "requires_args": false,
+            "arg_mapping": {"target": 0},
+            "validates": [],
+            "output_type": "directory_listing"
+        }
+    },
+
+    "cat": {
+        "output": "dynamic",
+        "latency_ms": [50, 150],
+        "file_operations": {
+            "type": "read",
+            "requires_args": true,
+            "arg_mapping": {"target": 0},
+            "validates": ["exists", "is_file"],
+            "output_type": "file_content"
+        }
+    },
+
+    "more": {
+        "output": "dynamic",
+        "latency_ms": [50, 150],
+        "file_operations": {
+            "type": "read",
+            "requires_args": true,
+            "arg_mapping": {"target": 0},
+            "validates": ["exists", "is_file"],
+            "output_type": "file_content"
+        }
+    },
+
+    "less": {
+        "output": "dynamic",
+        "latency_ms": [50, 150],
+        "file_operations": {
+            "type": "read",
+            "requires_args": true,
+            "arg_mapping": {"target": 0},
+            "validates": ["exists", "is_file"],
+            "output_type": "file_content"
+        }
+    },
+
+    "head": {
+        "output": "dynamic",
+        "latency_ms": [40, 100],
+        "file_operations": {
+            "type": "read",
+            "requires_args": true,
+            "arg_mapping": {"target": 0},
+            "validates": ["exists", "is_file"],
+            "flags": {
+                "-n": {"lines": "next_arg"}
+            },
+            "output_type": "file_content_lines",
+            "default_lines": 10
+        }
+    },
+
+    "tail": {
+        "output": "dynamic",
+        "latency_ms": [40, 100],
+        "file_operations": {
+            "type": "read",
+            "requires_args": true,
+            "arg_mapping": {"target": 0},
+            "validates": ["exists", "is_file"],
+            "flags": {
+                "-n": {"lines": "next_arg"},
+                "-f": {"follow": true}
+            },
+            "output_type": "file_content_lines",
+            "default_lines": 10,
+            "tail_mode": true
+        }
+    },
+
+    "touch": {
+        "output": "",
+        "latency_ms": [30, 80],
+        "file_operations": {
+            "type": "create",
+            "requires_args": true,
+            "arg_mapping": {"target": 0},
+            "validates": [],
+            "effect": {
+                "action": "create",
+                "content": "",
+                "update_mtime": true
+            }
+        }
+    },
+
+    "mkdir": {
+        "output": "",
+        "latency_ms": [30, 90],
+        "file_operations": {
+            "type": "create",
+            "requires_args": true,
+            "arg_mapping": {"target": 0},
+            "validates": ["parent_exists"],
+            "flags": {
+                "-p": {"create_parents": true, "skip_validation": true}
+            },
+            "effect": {
+                "action": "create",
+                "file_type": "dir"
+            }
+        }
+    },
+
+    "rm": {
+        "output": "",
+        "latency_ms": [30, 90],
+        "file_operations": {
+            "type": "delete",
+            "requires_args": true,
+            "arg_mapping": {"target": 0},
+            "validates": ["exists"],
+            "flags": {
+                "-r": {"recursive": true},
+                "-f": {"force": true, "skip_validation": true}
+            },
+            "effect": {
+                "action": "delete"
+            }
+        }
+    },
+
+    "rmdir": {
+        "output": "",
+        "latency_ms": [30, 90],
+        "file_operations": {
+            "type": "delete",
+            "requires_args": true,
+            "arg_mapping": {"target": 0},
+            "validates": ["exists", "is_dir", "is_empty"],
+            "effect": {
+                "action": "delete"
+            }
+        }
+    },
+
+    "cp": {
+        "output": "dynamic",
+        "latency_ms": [50, 150],
+        "file_operations": {
+            "type": "copy",
+            "requires_args": true,
+            "arg_mapping": {"source": 0, "destination": 1},
+            "validates": ["source_exists"],
+            "flags": {
+                "-r": {"recursive": true},
+                "-f": {"force": true}
+            },
+            "effect": {
+                "action": "copy",
+                "preserve_attrs": false
+            }
+        }
+    },
+
+    "mv": {
+        "output": "dynamic",
+        "latency_ms": [50, 150],
+        "file_operations": {
+            "type": "move",
+            "requires_args": true,
+            "arg_mapping": {"source": 0, "destination": 1},
+            "validates": ["source_exists"],
+            "flags": {
+                "-f": {"force": true}
+            },
+            "effect": {
+                "action": "move"
+            }
+        }
+    },
+
+    "echo": {
+        "output": "dynamic",
+        "latency_ms": [20, 50],
+        "file_operations": {
+            "type": "write",
+            "requires_args": false,
+            "redirects": {
+                ">": {"action": "overwrite", "arg_after_redirect": 0},
+                ">>": {"action": "append", "arg_after_redirect": 0}
+            },
+            "effect": {
+                "content_source": "args_before_redirect"
+            }
+        }
+    },
+
+    "chmod": {
+        "output": "dynamic",
+        "latency_ms": [50, 130],
+        "file_operations": {
+            "type": "modify",
+            "requires_args": true,
+            "arg_mapping": {"permissions": 0, "target": 1},
+            "validates": ["exists"],
+            "flags": {
+                "-R": {"recursive": true}
+            },
+            "effect": {
+                "action": "modify_metadata",
+                "metadata_field": "permissions"
+            }
+        }
+    },
+
+    "chown": {
+        "output": "dynamic",
+        "latency_ms": [50, 130],
+        "file_operations": {
+            "type": "modify",
+            "requires_args": true,
+            "arg_mapping": {"owner": 0, "target": 1},
+            "validates": ["exists"],
+            "flags": {
+                "-R": {"recursive": true}
+            },
+            "effect": {
+                "action": "modify_metadata",
+                "metadata_field": "owner"
+            }
+        }
+    },
+
+    "chgrp": {
+        "output": "dynamic",
+        "latency_ms": [50, 130],
+        "file_operations": {
+            "type": "modify",
+            "requires_args": true,
+            "arg_mapping": {"group": 0, "target": 1},
+            "validates": ["exists"],
+            "flags": {
+                "-R": {"recursive": true}
+            },
+            "effect": {
+                "action": "modify_metadata",
+                "metadata_field": "group"
+            }
+        }
+    },
+
+    "ln": {
+        "output": "dynamic",
+        "latency_ms": [40, 100],
+        "file_operations": {
+            "type": "link",
+            "requires_args": true,
+            "arg_mapping": {"target": 0, "link_name": 1},
+            "validates": ["source_exists"],
+            "flags": {
+                "-s": {"symbolic": true},
+                "-f": {"force": true}
+            },
+            "effect": {
+                "action": "create_link"
+            }
+        }
+    },
+
+    "grep": {
+        "output": "dynamic",
+        "latency_ms": [50, 150],
+        "file_operations": {
+            "type": "read",
+            "requires_args": true,
+            "arg_mapping": {"pattern": 0, "target": 1},
+            "validates": [],
+            "flags": {
+                "-i": {"case_insensitive": true},
+                "-r": {"recursive": true},
+                "-n": {"show_line_numbers": true},
+                "-v": {"invert_match": true},
+                "-c": {"count_only": true}
+            },
+            "output_type": "pattern_match"
+        }
+    },
+
+    "find": {
+        "output": "dynamic",
+        "latency_ms": [100, 300],
+        "file_operations": {
+            "type": "read",
+            "requires_args": false,
+            "arg_mapping": {"start_path": 0},
+            "validates": [],
+            "flags": {
+                "-name": {"pattern": "next_arg"},
+                "-type": {"file_type": "next_arg"},
+                "-size": {"size_filter": "next_arg"}
+            },
+            "output_type": "path_search"
+        }
+    },
+
+    "which": {
+        "output": "dynamic",
+        "latency_ms": [40, 100],
+        "file_operations": {
+            "type": "read",
+            "requires_args": true,
+            "arg_mapping": {"command": 0},
+            "output_type": "command_path"
+        }
+    },
+
+    "whereis": {
+        "output": "dynamic",
+        "latency_ms": [50, 120],
+        "file_operations": {
+            "type": "read",
+            "requires_args": true,
+            "arg_mapping": {"command": 0},
+            "output_type": "command_locations"
+        }
+    },
+
+    "file": {
+        "output": "dynamic",
+        "latency_ms": [40, 100],
+        "file_operations": {
+            "type": "read",
+            "requires_args": true,
+            "arg_mapping": {"target": 0},
+            "validates": ["exists"],
+            "output_type": "file_type_info"
+        }
+    },
+
+    "wc": {
+        "output": "dynamic",
+        "latency_ms": [40, 100],
+        "file_operations": {
+            "type": "read",
+            "requires_args": true,
+            "arg_mapping": {"target": 0},
+            "validates": ["exists", "is_file"],
+            "flags": {
+                "-l": {"lines_only": true},
+                "-w": {"words_only": true},
+                "-c": {"chars_only": true}
+            },
+            "output_type": "word_count"
+        }
+    },
+
+    "sort": {
+        "output": "dynamic",
+        "latency_ms": [50, 130],
+        "file_operations": {
+            "type": "read",
+            "requires_args": false,
+            "arg_mapping": {"target": 0},
+            "validates": [],
+            "flags": {
+                "-r": {"reverse": true},
+                "-n": {"numeric": true},
+                "-u": {"unique": true}
+            },
+            "output_type": "sorted_content"
+        }
+    },
+
+    "uniq": {
+        "output": "dynamic",
+        "latency_ms": [40, 100],
+        "file_operations": {
+            "type": "read",
+            "requires_args": false,
+            "arg_mapping": {"target": 0},
+            "validates": [],
+            "flags": {
+                "-c": {"count": true},
+                "-d": {"duplicates_only": true}
+            },
+            "output_type": "unique_lines"
+        }
+    },
+
+    "cut": {
+        "output": "dynamic",
+        "latency_ms": [40, 100],
+        "file_operations": {
+            "type": "read",
+            "requires_args": false,
+            "arg_mapping": {"target": 0},
+            "validates": [],
+            "flags": {
+                "-d": {"delimiter": "next_arg"},
+                "-f": {"fields": "next_arg"}
+            },
+            "output_type": "cut_fields"
+        }
+    },
+
+    "awk": {
+        "output": "dynamic",
+        "latency_ms": [50, 150],
+        "file_operations": {
+            "type": "read",
+            "requires_args": true,
+            "arg_mapping": {"pattern": 0, "target": 1},
+            "validates": [],
+            "output_type": "awk_processing"
+        }
+    },
+
+    "sed": {
+        "output": "dynamic",
+        "latency_ms": [50, 150],
+        "file_operations": {
+            "type": "read",
+            "requires_args": true,
+            "arg_mapping": {"expression": 0, "target": 1},
+            "validates": [],
+            "flags": {
+                "-i": {"in_place": true}
+            },
+            "output_type": "sed_processing"
+        }
+    },
+
+    "tar": {
+        "output": "dynamic",
+        "latency_ms": [100, 300],
+        "file_operations": {
+            "type": "archive",
+            "requires_args": true,
+            "arg_mapping": {"archive": 1, "targets": "remaining"},
+            "validates": [],
+            "flags": {
+                "-c": {"create": true},
+                "-x": {"extract": true},
+                "-t": {"list": true},
+                "-f": {"file": "next_arg"},
+                "-z": {"gzip": true},
+                "-v": {"verbose": true}
+            },
+            "output_type": "archive_operation"
+        }
+    },
+
+    "gzip": {
+        "output": "dynamic",
+        "latency_ms": [80, 200],
+        "file_operations": {
+            "type": "compress",
+            "requires_args": true,
+            "arg_mapping": {"target": 0},
+            "validates": ["exists", "is_file"],
+            "effect": {
+                "action": "compress",
+                "creates_file": true,
+                "suffix": ".gz"
+            }
+        }
+    },
+
+    "gunzip": {
+        "output": "dynamic",
+        "latency_ms": [80, 200],
+        "file_operations": {
+            "type": "decompress",
+            "requires_args": true,
+            "arg_mapping": {"target": 0},
+            "validates": ["exists", "is_file"],
+            "effect": {
+                "action": "decompress",
+                "removes_suffix": ".gz"
+            }
+        }
+    },
+
+    "zip": {
+        "output": "dynamic",
+        "latency_ms": [80, 200],
+        "file_operations": {
+            "type": "archive",
+            "requires_args": true,
+            "arg_mapping": {"archive": 0, "targets": "remaining"},
+            "validates": [],
+            "flags": {
+                "-r": {"recursive": true}
+            },
+            "output_type": "zip_operation"
+        }
+    },
+
+    "unzip": {
+        "output": "dynamic",
+        "latency_ms": [80, 200],
+        "file_operations": {
+            "type": "extract",
+            "requires_args": true,
+            "arg_mapping": {"archive": 0},
+            "validates": ["exists", "is_file"],
+            "flags": {
+                "-d": {"destination": "next_arg"}
+            },
+            "output_type": "unzip_operation"
+        }
+    },
+
+    "du": {
+        "output": "4\t./.ssh\n12\t./",
+        "latency_ms": [50, 130],
+        "description": "Disk usage - shows directory sizes (could be made dynamic)"
+    },
+
+    "date": {
+        "output": "dynamic",
+        "latency_ms": [30, 80],
+        "file_operations": {
+            "type": "system_info",
+            "requires_args": false,
+            "output_type": "current_datetime"
+        }
+    },
+
+    "history": {
+        "output": "    1  ls\n    2  cd /var\n    3  pwd\n    4  cat /etc/passwd\n    5  history",
+        "latency_ms": [40, 100],
+        "description": "Command history - can be made session-aware and dynamic"
+    },
+
+    "_section_3": "============================================================",
+    "_section_3_title": "SYSTEM CONTROL & USER MANAGEMENT",
+    "_section_3_purpose": "Commands for managing services, users, and privileges",
+    "_section_3_end": "============================================================",
+
+    "systemctl": {
+        "output": "dynamic",
+        "latency_ms": [80, 200],
+        "file_operations": {
+            "type": "system_control",
+            "requires_args": true,
+            "arg_mapping": {"action": 0, "service": 1},
+            "validates": [],
+            "output_type": "systemctl_output"
+        }
+    },
+
+    "service": {
+        "output": "dynamic",
+        "latency_ms": [80, 200],
+        "file_operations": {
+            "type": "system_control",
+            "requires_args": true,
+            "arg_mapping": {"service": 0, "action": 1},
+            "validates": [],
+            "output_type": "service_output"
+        }
+    },
+
+    "systemctl status": {
+        "output": "● system.slice\n   Loaded: loaded\n   Active: active since Mon 2024-01-15 00:00:01 UTC; 10 days ago",
+        "latency_ms": [80, 200]
+    },
+
+    "kill": {
+        "output": "dynamic",
+        "latency_ms": [40, 100],
+        "file_operations": {
+            "type": "system_control",
+            "requires_args": true,
+            "arg_mapping": {"pid": 0},
+            "validates": [],
+            "flags": {
+                "-9": {"force": true},
+                "-KILL": {"force": true},
+                "-TERM": {"terminate": true}
+            },
+            "output_type": "kill_output"
+        }
+    },
+
+    "killall": {
+        "output": "dynamic",
+        "latency_ms": [50, 120],
+        "file_operations": {
+            "type": "system_control",
+            "requires_args": true,
+            "arg_mapping": {"process_name": 0},
+            "validates": [],
+            "flags": {
+                "-9": {"force": true}
+            },
+            "output_type": "killall_output"
+        }
+    },
+
+    "su": {
+        "output": "dynamic",
+        "latency_ms": [50, 150],
+        "file_operations": {
+            "type": "user_control",
+            "requires_args": false,
+            "arg_mapping": {"target_user": 0},
+            "output_type": "su_prompt"
+        }
+    },
+
+    "sudo": {
+        "output": "dynamic",
+        "latency_ms": [60, 180],
+        "file_operations": {
+            "type": "user_control",
+            "requires_args": true,
+            "arg_mapping": {"command": "remaining"},
+            "validates": [],
+            "flags": {
+                "-u": {"user": "next_arg"},
+                "-i": {"login_shell": true}
+            },
+            "output_type": "sudo_execution"
+        }
+    },
+
+    "useradd": {
+        "output": "dynamic",
+        "latency_ms": [80, 200],
+        "file_operations": {
+            "type": "user_management",
+            "requires_args": true,
+            "arg_mapping": {"username": 0},
+            "validates": [],
+            "flags": {
+                "-m": {"create_home": true},
+                "-s": {"shell": "next_arg"},
+                "-g": {"group": "next_arg"}
+            },
+            "effect": {
+                "action": "create_user",
+                "modifies_file": "/etc/passwd"
+            }
+        }
+    },
+
+    "userdel": {
+        "output": "dynamic",
+        "latency_ms": [80, 200],
+        "file_operations": {
+            "type": "user_management",
+            "requires_args": true,
+            "arg_mapping": {"username": 0},
+            "validates": [],
+            "flags": {
+                "-r": {"remove_home": true}
+            },
+            "effect": {
+                "action": "delete_user",
+                "modifies_file": "/etc/passwd"
+            }
+        }
+    },
+
+    "groupadd": {
+        "output": "dynamic",
+        "latency_ms": [80, 200],
+        "file_operations": {
+            "type": "user_management",
+            "requires_args": true,
+            "arg_mapping": {"groupname": 0},
+            "validates": [],
+            "effect": {
+                "action": "create_group",
+                "modifies_file": "/etc/group"
+            }
+        }
+    },
+
+    "umount": {
+        "output": "dynamic",
+        "latency_ms": [60, 150],
+        "file_operations": {
+            "type": "system_control",
+            "requires_args": true,
+            "arg_mapping": {"target": 0},
+            "validates": [],
+            "output_type": "umount_output"
+        }
+    },
+
+    "reboot": {
+        "output": "Connection to 127.0.0.1 closed by remote host.\nConnection to 127.0.0.1 closed.",
+        "latency_ms": [100, 300]
+    },
+
+    "shutdown": {
+        "output": "Shutdown scheduled for now, use 'shutdown -c' to cancel.",
+        "latency_ms": [80, 200]
+    },
+
+    "_section_4": "============================================================",
+    "_section_4_title": "FIXED RESPONSES - Error Messages & Standard Output",
+    "_section_4_purpose": "Commands that should have consistent, predictable responses",
+    "_section_4_end": "============================================================",
+
+    "clear": {
+        "output": "\u001b[H\u001b[2J",
+        "latency_ms": [10, 30]
+    },
+
+    "passwd": {
+        "output": "Enter new password: ",
+        "latency_ms": [50, 120]
+    },
+
+    "crontab": {
+        "output": "no crontab for root",
+        "latency_ms": [50, 120]
+    },
+
+    "htop": {
+        "output": "htop: command requires terminal",
+        "latency_ms": [80, 180]
+    },
+
+    "wget": {
+        "output": "wget: missing URL\nUsage: wget [OPTION]... [URL]...\n\nTry `wget --help' for more options.",
+        "latency_ms": [50, 150]
+    },
+
+    "curl": {
+        "output": "curl: try 'curl --help' or 'curl --manual' for more information",
+        "latency_ms": [50, 150]
+    },
+
+    "ping": {
+        "output": "PING 8.8.8.8 (8.8.8.8) 56(84) bytes of data.\n64 bytes from 8.8.8.8: icmp_seq=1 ttl=117 time={{random:10.0:15.0:1}} ms\n64 bytes from 8.8.8.8: icmp_seq=2 ttl=117 time={{random:10.0:15.0:1}} ms\n\n--- 8.8.8.8 ping statistics ---\n2 packets transmitted, 2 received, 0% packet loss, time 1001ms\nrtt min/avg/max/mdev = {{random:10.0:12.0:3}}/{{random:11.5:12.5:3}}/{{random:13.0:15.0:3}}/{{random:0.200:0.500:3}} ms",
+        "latency_ms": [1000, 1500],
+        "dynamic_values": true
+    },
+
+    "nc": {
+        "output": "usage: nc [-46CDdFhklNnrStUuvZz] [-I length] [-i interval] [-M ttl]\n\t  [-m minttl] [-O length] [-P proxy_username] [-p source_port]",
+        "latency_ms": [40, 100]
+    },
+
+    "ssh": {
+        "output": "usage: ssh [-46AaCfGgKkMNnqsTtVvXxYy] [-B bind_interface]\n           [-b bind_address] [-c cipher_spec] [-D [bind_address:]port]",
+        "latency_ms": [50, 120]
+    },
+
+    "scp": {
+        "output": "usage: scp [-346BCpqrTv] [-c cipher] [-F ssh_config] [-i identity_file]\n           [-J destination] [-l limit] [-o ssh_option] [-P port]",
+        "latency_ms": [50, 120]
+    },
+
+    "rsync": {
+        "output": "rsync: no source specified\nrsync error: syntax or usage error (code 1) at main.c(1337)",
+        "latency_ms": [60, 150]
+    },
+
+    "dd": {
+        "output": "dd: missing operand\nTry 'dd --help' for more information.",
+        "latency_ms": [50, 120]
+    },
+
+    "fdisk": {
+        "output": "fdisk: cannot open /dev/sda: Permission denied",
+        "latency_ms": [50, 120]
+    },
+
+    "dmidecode": {
+        "output": "/dev/mem: Permission denied\ndmidecode: command requires root privileges",
+        "latency_ms": [80, 180]
+    },
+
+    "firewall-cmd": {
+        "output": "FirewallD is not running",
+        "latency_ms": [80, 180]
+    },
+
+    "cron": {
+        "output": "cron: can't lock /var/run/crond.pid, otherpid may be 1234: Resource temporarily unavailable",
+        "latency_ms": [50, 120]
+    },
+
+    "vi": {
+        "output": "Vim: Warning: Output is not to a terminal\nVim: Warning: Input is not from a terminal",
+        "latency_ms": [50, 120]
+    },
+
+    "vim": {
+        "output": "Vim: Warning: Output is not to a terminal\nVim: Warning: Input is not from a terminal",
+        "latency_ms": [50, 120]
+    },
+
+    "nano": {
+        "output": "Error opening terminal: unknown.",
+        "latency_ms": [50, 120]
+    },
+
+    "perl": {
+        "output": "Can't open perl script \"\": No such file or directory",
+        "latency_ms": [50, 120]
+    },
+
+    "php": {
+        "output": "Could not open input file:",
+        "latency_ms": [80, 180]
+    },
+
+    "ruby": {
+        "output": "ruby: no input file",
+        "latency_ms": [80, 180]
+    },
+
+    "gcc": {
+        "output": "gcc: fatal error: no input files\ncompilation terminated.",
+        "latency_ms": [60, 150]
+    },
+
+    "make": {
+        "output": "make: *** No targets specified and no makefile found.  Stop.",
+        "latency_ms": [60, 150]
+    },
+
+    "git": {
+        "output": "usage: git [--version] [--help] [-C <path>] [-c <name>=<value>]\n           [--exec-path[=<path>]] [--html-path] [--man-path] [--info-path]",
+        "latency_ms": [60, 150]
+    },
+
+    "_section_5": "============================================================",
+    "_section_5_title": "COMMAND NOT FOUND - Missing/Unavailable Tools",
+    "_section_5_purpose": "Commands that should report as not installed",
+    "_section_5_end": "============================================================",
+
+    "at": {
+        "output": "bash: at: command not found",
+        "latency_ms": [40, 100]
+    },
+
+    "screen": {
+        "output": "bash: screen: command not found",
+        "latency_ms": [40, 100]
+    },
+
+    "tmux": {
+        "output": "bash: tmux: command not found",
+        "latency_ms": [40, 100]
+    },
+
+    "docker": {
+        "output": "bash: docker: command not found",
+        "latency_ms": [50, 120]
+    },
+
+    "kubectl": {
+        "output": "bash: kubectl: command not found",
+        "latency_ms": [50, 120]
+    },
+
+    "mysql": {
+        "output": "bash: mysql: command not found",
+        "latency_ms": [50, 120]
+    },
+
+    "psql": {
+        "output": "psql: could not connect to server: No such file or directory\n\tIs the server running locally and accepting connections on Unix domain socket \"/var/run/postgresql/.s.PGSQL.5432\"?",
+        "latency_ms": [80, 180]
+    },
+
+    "redis-cli": {
+        "output": "bash: redis-cli: command not found",
+        "latency_ms": [50, 120]
+    },
+
+    "apache2": {
+        "output": "bash: apache2: command not found",
+        "latency_ms": [50, 120]
+    },
+
+    "nginx": {
+        "output": "bash: nginx: command not found",
+        "latency_ms": [50, 120]
+    },
+
+    "traceroute": {
+        "output": "bash: traceroute: command not found",
+        "latency_ms": [50, 120]
+    },
+
+    "nslookup": {
+        "output": "bash: nslookup: command not found",
+        "latency_ms": [50, 120]
+    },
+
+    "dig": {
+        "output": "bash: dig: command not found",
+        "latency_ms": [50, 120]
+    },
+
+    "host": {
+        "output": "bash: host: command not found",
+        "latency_ms": [50, 120]
+    },
+
+    "ethtool": {
+        "output": "bash: ethtool: command not found",
+        "latency_ms": [50, 120]
+    },
+
+    "tcpdump": {
+        "output": "bash: tcpdump: command not found",
+        "latency_ms": [50, 120]
+    },
+
+    "nmap": {
+        "output": "bash: nmap: command not found",
+        "latency_ms": [50, 120]
+    },
+
+    "telnet": {
+        "output": "bash: telnet: command not found",
+        "latency_ms": [50, 120]
+    },
+
+    "ftp": {
+        "output": "bash: ftp: command not found",
+        "latency_ms": [50, 120]
+    },
+
+    "smbclient": {
+        "output": "bash: smbclient: command not found",
+        "latency_ms": [50, 120]
+    },
+
+    "nfs": {
+        "output": "bash: nfs: command not found",
+        "latency_ms": [50, 120]
+    }
+}
